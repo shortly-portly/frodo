@@ -72,7 +72,8 @@
 ;; Initialize app
 (defn mount-components []
   (rf/clear-subscription-cache!)
-  (rdom/render [#'page] (.getElementById js/document "app")))
+  (rdom/render [#'page] (.getElementById js/document "app"))
+  (rf/dispatch [:fetch-notes]))
 
 (defn init! []
   (start-router!)

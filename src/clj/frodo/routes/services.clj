@@ -1,16 +1,17 @@
 (ns frodo.routes.services
   (:require
-    [reitit.swagger :as swagger]
-    [reitit.swagger-ui :as swagger-ui]
-    [reitit.ring.coercion :as coercion]
-    [reitit.coercion.spec :as spec-coercion]
-    [reitit.ring.middleware.muuntaja :as muuntaja]
-    [reitit.ring.middleware.multipart :as multipart]
-    [reitit.ring.middleware.parameters :as parameters]
-    [frodo.middleware.formats :as formats]
-    [frodo.middleware.exception :as exception]
-    [ring.util.http-response :refer :all]
-    [clojure.java.io :as io]))
+   [frodo.db.core :as db]
+   [reitit.swagger :as swagger]
+   [reitit.swagger-ui :as swagger-ui]
+   [reitit.ring.coercion :as coercion]
+   [reitit.coercion.spec :as spec-coercion]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.ring.middleware.multipart :as multipart]
+   [reitit.ring.middleware.parameters :as parameters]
+   [frodo.middleware.formats :as formats]
+   [frodo.middleware.exception :as exception]
+   [ring.util.http-response :refer :all]
+   [clojure.java.io :as io]))
 
 (defn service-routes []
   ["/api"
@@ -44,12 +45,16 @@
 
     ["/api-docs/*"
      {:get (swagger-ui/create-swagger-ui-handler
-             {:url "/api/swagger.json"
-              :config {:validator-url nil}})}]]
+            {:url "/api/swagger.json"
+             :config {:validator-url nil}})}]]
 
+   ["/notes"
+    {:get {:summary "returns a list of notes"
+           :handler (fn [_]
+                      {:status 200
+                       :body (db/get-notes)})}}]
    ["/ping"
     {:get (constantly (ok {:message "pong"}))}]
-   
 
    ["/math"
     {:swagger {:tags ["math"]}}

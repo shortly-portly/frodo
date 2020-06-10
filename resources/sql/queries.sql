@@ -19,3 +19,13 @@ WHERE id = :id
 -- :doc deletes a user record given the id
 DELETE FROM users
 WHERE id = :id
+
+-- :name get-notes :? :*
+-- :doc returns a list of notes
+SELECT * FROM notes
+
+-- :name create-note! :! :n
+-- :doc creates a new note
+INSERT INTO notes
+(content, creation_ts)
+VALUES (:content, :creation_ts)

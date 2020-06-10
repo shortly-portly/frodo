@@ -30,6 +30,16 @@
   (fn [db [_ docs]]
     (assoc db :docs docs)))
 
+(rf/reg-event-db
+  :set-notes
+  (fn [db [_ notes]]
+    (prn notes)
+    (let [foo-notes
+    (->> notes
+         (mapv (fn [note] (assoc note :edit false)) notes)
+         (reduce #(assoc %1 (:id %2) %2) {}))]
+    (assoc db :notes foo-notes))))
+
 (rf/reg-event-fx
   :fetch-docs
   (fn [_ _]
@@ -37,6 +47,14 @@
                   :uri             "/docs"
                   :response-format (ajax/raw-response-format)
                   :on-success       [:set-docs]}}))
+
+(rf/reg-event-fx
+  :fetch-notes
+  (fn [_ _]
+    {:http-xhrio {:method          :get
+                  :uri             "/api/notes"
+                  :response-format (ajax/transit-response-format)
+                  :on-success       [:set-notes]}}))
 
 (rf/reg-event-db
   :common/set-error
