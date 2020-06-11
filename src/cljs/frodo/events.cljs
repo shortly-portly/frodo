@@ -110,7 +110,3 @@
  (fn [db [_ id]]
    ((:notes db) id)))
 
-(rf/reg-sub
- :content
- (fn [db [_ id]]
-   (((:notes db) id) :content)))

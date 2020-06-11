@@ -39,16 +39,21 @@
 
 (defn textarea-input []
   (fn [value callback-fn]
+    (let [row-count (count (re-seq #"\n" value))]
+    [:div.form-group
     [:textarea
      {:value     value                                     ;; initial value
-      :on-change #(callback-fn (-> % .-target .-value))}]))
+      :rows (if (< row-count 5) 7 (+ row-count 2))
+      :class "form-control"
+      :on-change #(callback-fn (-> % .-target .-value))}]])))
 
 (defn note-component
   []                                                  
   (let [editing (r/atom false)]            
     (fn [id]
       (let [note @(rf/subscribe [:note id])]
-        [:div {:on-double-click #(reset! editing (not @editing))}
+        [:div {:class "shadow p-3 mb-5 bg-white rounded"
+               :on-double-click #(reset! editing (not @editing))}
          (if @editing
            [textarea-input
             (:content note)
