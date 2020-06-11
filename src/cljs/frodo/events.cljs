@@ -37,10 +37,13 @@
 (rf/reg-event-db
  :set-notes
  (fn [db [_ db-notes]]
-   (let [notes (->> db-notes
-                    (mapv (fn [note] (assoc note :edit false)))
-                    (reduce #(assoc %1 (:id %2) %2) {}))]
+   (let [notes (reduce #(assoc %1 (:id %2) %2) {} db-notes)]
      (assoc db :notes notes))))
+
+(rf/reg-event-db
+ :note-change
+ (fn [db [_ id field new-content]]
+   (update-in db [:notes id field] (fn [] new-content))))
 
 (rf/reg-event-fx
  :fetch-docs
@@ -96,3 +99,18 @@
  :common/error
  (fn [db _]
    (:common/error db)))
+
+(rf/reg-sub
+ :note-ids
+ (fn [db _]
+   (keys(:notes db))))
+
+(rf/reg-sub
+ :note
+ (fn [db [_ id]]
+   ((:notes db) id)))
+
+(rf/reg-sub
+ :content
+ (fn [db [_ id]]
+   (((:notes db) id) :content)))
