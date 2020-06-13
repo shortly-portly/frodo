@@ -29,3 +29,9 @@ SELECT * FROM notes
 INSERT INTO notes
 (content, creation_ts)
 VALUES (:content, :creation_ts)
+
+-- :name update-note! :! :n
+-- :doc updates an existing user record
+UPDATE notes
+SET content = :content, update_ts = :update_ts
+WHERE id = :id

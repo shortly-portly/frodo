@@ -30,6 +30,12 @@
  (fn [db [_ docs]]
    (assoc db :docs docs)))
 
+
+(rf/reg-event-db
+ :no-op
+ (fn [db _]
+   db))
+
 ; Notes returned from backend database as a vector of maps where a single
 ; map represents a database row. Convert to a single map where each key is the
 ; id of the database row and the value is the row itself. This makes accessing
@@ -52,7 +58,6 @@
                  :uri             "/docs"
                  :response-format (ajax/raw-response-format)
                  :on-success       [:set-docs]}}))
-
 (rf/reg-event-fx
  :fetch-notes
  (fn [_ _]
@@ -60,6 +65,16 @@
                  :uri             "/api/notes"
                  :response-format (ajax/transit-response-format)
                  :on-success       [:set-notes]}}))
+(rf/reg-event-fx
+ :update-note
+ (fn [{:keys [db]} [_ id]]
+   (let [note ((:notes db) id)]
+     {:http-xhrio {:method :post
+                   :uri "/api/notes"
+                   :format (ajax/transit-request-format)
+                   :response-format (ajax/transit-response-format)
+                   :params note
+                   :on-success [:no-op]}})))
 
 (rf/reg-event-db
  :common/set-error
@@ -103,10 +118,9 @@
 (rf/reg-sub
  :note-ids
  (fn [db _]
-   (keys(:notes db))))
+   (keys (:notes db))))
 
 (rf/reg-sub
  :note
  (fn [db [_ id]]
    ((:notes db) id)))
-

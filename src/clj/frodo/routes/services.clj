@@ -52,7 +52,15 @@
     {:get {:summary "returns a list of notes"
            :handler (fn [_]
                       {:status 200
-                       :body (db/get-notes)})}}]
+                       :body (db/get-notes)})}
+     :post {:summary "updates the post with the given id"
+            :handler (fn [{:keys [body-params]}]
+                       (println "POST received" )
+                       (clojure.pprint/pprint body-params)
+                       (db/update-note! body-params)
+                       {:status 200
+                        :body {:foo 0}}
+                       )}}]
    ["/ping"
     {:get (constantly (ok {:message "pong"}))}]
 

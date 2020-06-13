@@ -52,7 +52,9 @@
   (let [editing (r/atom false)
         note    (r/atom @(rf/subscribe [:note id]))
         save   #(do (rf/dispatch [:note-change id :content %])
-                     (reset! editing false))
+                    (rf/dispatch [:update-note id])
+                    (reset! editing false))
+
         cancel #(do (reset! note @(rf/subscribe [:note id]))
                     (reset! editing false))]
     (fn []
