@@ -39,54 +39,44 @@
 
 (defn textarea-input []
   (fn [content update-fn]
-    (let [value content
-          row-count (count (re-seq #"\n" value))]
+    (let [row-count (count (re-seq #"\n" content))]
       [:div.form-group
        [:textarea
-        {:value     value                                     ;; initial value
-         :rows (if (< row-count 5) 7 (+ row-count 2))
-         :class "form-control"
-         :on-change #(do
-                       (prn (:content (update-fn (-> % .-target .-value))))
-                       (update-fn (-> % .-target .-value)))}]])))
+        {:value     content                                     ;; initial value
+         :rows      (if (< row-count 5) 7 (+ row-count 2))
+         :class     "form-control"
+         :on-change #(update-fn (-> % .-target .-value))}]])))
 
 (defn note-component
   [id]
   (let [editing (r/atom false)
-        note (r/atom @(rf/subscribe [:note id]))]
+        note    (r/atom @(rf/subscribe [:note id]))
+        save   #(do (rf/dispatch [:note-change id :content %])
+                     (reset! editing false))
+        cancel #(do (reset! note @(rf/subscribe [:note id]))
+                    (reset! editing false))]
     (fn []
-      (let [
+      [:div {:class "shadow p-3 mb-5 bg-white rounded"
+             :on-double-click #(reset! editing (not @editing))}
+       (if @editing
+         [:div
 
-            save #(do (rf/dispatch [:note-change id :content %])
-                      (reset! editing false))
-            cancel #(do (reset! note @(rf/subscribe [:note id]))
-                        (reset! editing false))]
+          [textarea-input (:content @note)
+           #(swap! note assoc :content %)]
 
-        [:div {:class "shadow p-3 mb-5 bg-white rounded"
-               :on-double-click #(reset! editing (not @editing))}
-         (if @editing
-           [:div
+          [:div.container
+           [:div.row
+            [:div.col-sm
+             [:button.btn.btn-outline-primary {:type "button"
+                                               :on-click #(save (:content @note))} "save"]]
 
-            [textarea-input (:content @note)
-             #(swap! note assoc :content %)]
+            [:div.col-sm
+             [:div.float-sm-right
+              [:button.btn.btn-outline-secondary {:type "button"
+                                                  :on-click cancel} "cancel"]]]]]]
 
-            [:div.container
-             [:div.row
-              [:div.col-sm
-               [:button.btn.btn-outline-primary {:type "button"
-                                                 :on-click #(save (:content @note))} "save"]]
-
-              [:div.col-sm
-               [:div.float-sm-right
-                [:button.btn.btn-outline-secondary {:type "button"
-                                                    :on-click cancel} "cancel"]]]]]]
-
-           [:div
-            [:div {:dangerouslySetInnerHTML {:__html (md->html (:content @note))}}]])
-
-         [:div (:content @note)]
-
-         ]))))
+         [:div
+          [:div {:dangerouslySetInnerHTML {:__html (md->html (:content @note))}}]])])))
 
 (defn notes-page []
   [:section.section>div.container>div.content
