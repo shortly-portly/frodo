@@ -40,26 +40,40 @@
 (defn textarea-input []
   (fn [value callback-fn]
     (let [row-count (count (re-seq #"\n" value))]
-    [:div.form-group
-    [:textarea
-     {:value     value                                     ;; initial value
-      :rows (if (< row-count 5) 7 (+ row-count 2))
-      :class "form-control"
-      :on-change #(callback-fn (-> % .-target .-value))}]])))
+      [:div.form-group
+       [:textarea
+        {:value     value                                     ;; initial value
+         :rows (if (< row-count 5) 7 (+ row-count 2))
+         :class "form-control"
+         :on-change #(callback-fn (-> % .-target .-value))}]])))
 
 (defn note-component
-  []                                                  
-  (let [editing (r/atom false)]            
+  []
+  (let [editing (r/atom false)]
     (fn [id]
       (let [note @(rf/subscribe [:note id])]
         [:div {:class "shadow p-3 mb-5 bg-white rounded"
                :on-double-click #(reset! editing (not @editing))}
          (if @editing
-           [textarea-input
-            (:content note)
-            #(rf/dispatch [:note-change id :content %])]
+           [:div
 
-           [:div {:dangerouslySetInnerHTML {:__html (md->html (:content note))}}])]))))
+            [textarea-input
+             (:content note)
+             #(rf/dispatch [:note-change id :content %])]
+
+            [:div.container
+             [:div.row
+              [:div.col-sm
+               [:button.btn.btn-outline-primary {:type "button"
+                                                 :on-click #(reset! editing (not @editing))} "save"]]
+
+              [:div.col-sm
+               [:div.float-sm-right
+                [:button.btn.btn-outline-secondary {:type "button"
+                                                    :on-click #(reset! editing (not @editing))} "cancel"]]]]]]
+
+           [:div
+            [:div {:dangerouslySetInnerHTML {:__html (md->html (:content note))}}]])]))))
 
 (defn notes-page []
   [:section.section>div.container>div.content
