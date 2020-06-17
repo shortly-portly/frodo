@@ -11,7 +11,7 @@
    [frodo.events]
    [reitit.core :as reitit]
    [reitit.frontend.easy :as rfe]
-   [clojure.string :as string])
+   )
   (:import goog.History))
 
 (defn nav-link [uri title page]
@@ -47,6 +47,29 @@
          :class     "form-control"
          :on-change #(update-fn (-> % .-target .-value))}]])))
 
+(defn new-note-component
+  []
+  (let [note (r/atom {:content ""
+                         :creation_ts (.now js/Date) })]
+  (fn []
+    [:div {:class "shadow p-3 mb-5 bg-white rounded"}
+
+       [:div (str (js/Date. (:creation_ts @note)))]
+         [:div
+
+          [textarea-input (:content @note)
+           #(swap! note assoc :content %)]
+
+          [:div.container
+           [:div.row
+            [:div.col-sm
+             [:button.btn.btn-outline-primary {:type "button"
+                                               :on-click #(rf/dispatch [:create-note note])} "saved"]]
+
+            [:div.col-sm
+             [:div.float-sm-right
+              [:button.btn.btn-outline-secondary {:type "button"} "cancel"]]]]]]])))
+
 (defn note-component
   [id]
   (let [editing (r/atom false)
@@ -60,6 +83,7 @@
     (fn []
       [:div {:class "shadow p-3 mb-5 bg-white rounded"
              :on-double-click #(reset! editing (not @editing))}
+       [:div (str (js/Date. (:creation_ts @note)))]
        (if @editing
          [:div
 
@@ -83,6 +107,7 @@
 (defn notes-page []
   [:section.section>div.container>div.content
    [:h1 "Notes Page"]
+   [new-note-component]
    (for [id @(rf/subscribe [:note-ids])]
      ^{:key id} [note-component id])])
 

@@ -24,7 +24,7 @@ WHERE id = :id
 -- :doc returns a list of notes
 SELECT * FROM notes
 
--- :name create-note! :! :n
+-- :name create-note! :insert
 -- :doc creates a new note
 INSERT INTO notes
 (content, creation_ts)

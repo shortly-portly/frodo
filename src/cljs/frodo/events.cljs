@@ -65,12 +65,36 @@
                  :uri             "/api/notes"
                  :response-format (ajax/transit-response-format)
                  :on-success       [:set-notes]}}))
+
+(rf/reg-event-db
+ :add-note
+ (fn [db [_ note result]]
+   (let [id (:id result)
+         note (assoc @note :id id)
+         notes (:notes db)
+         ]
+     (assoc db :notes (assoc notes id note)))))
+
+
+(rf/reg-event-fx
+ :create-note
+ (fn [{:keys [db]} [_ note]]
+   (prn "create-note called")
+   (prn note)
+     {:http-xhrio {:method :post
+                   :uri "/api/notes/create"
+                   :format (ajax/transit-request-format)
+                   :response-format (ajax/transit-response-format)
+                   :params @note
+                   :on-success [:add-note note]}}))
+
+
 (rf/reg-event-fx
  :update-note
  (fn [{:keys [db]} [_ id]]
    (let [note ((:notes db) id)]
      {:http-xhrio {:method :post
-                   :uri "/api/notes"
+                   :uri "/api/notes/update"
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
                    :params note
