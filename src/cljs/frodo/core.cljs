@@ -49,26 +49,26 @@
 
 (defn new-note-component
   []
-  (let [note (r/atom {:content ""
-                         :creation_ts (.now js/Date) })]
-  (fn []
-    [:div {:class "shadow p-3 mb-5 bg-white rounded"}
-
-       [:div (str (js/Date. (:creation_ts @note)))]
-         [:div
-
-          [textarea-input (:content @note)
-           #(swap! note assoc :content %)]
+  (fn  []
+    (let [note @(rf/subscribe [:new-note])]
+      [:div {:class "shadow p-3 mb-5 bg-white rounded"}
+      [textarea-input (:content note)
+       #(rf/dispatch [:update-new-note  %])]
 
           [:div.container
            [:div.row
             [:div.col-sm
              [:button.btn.btn-outline-primary {:type "button"
-                                               :on-click #(rf/dispatch [:create-note note])} "saved"]]
+                                               :on-click #(rf/dispatch [:create-note])}
+                                                "save"]]
 
             [:div.col-sm
              [:div.float-sm-right
-              [:button.btn.btn-outline-secondary {:type "button"} "cancel"]]]]]]])))
+              [:button.btn.btn-outline-secondary {:type "button"
+                                                  :on-click #(rf/dispatch [:reset-note])}
+                                                   "cancel"]]]]]])))
+
+
 
 (defn note-component
   [id]
@@ -150,7 +150,9 @@
 (defn mount-components []
   (rf/clear-subscription-cache!)
   (rdom/render [#'page] (.getElementById js/document "app"))
-  (rf/dispatch [:fetch-notes]))
+  (rf/dispatch [:new-blank-note])
+  (rf/dispatch [:fetch-notes])
+  )
 
 (defn init! []
   (start-router!)
