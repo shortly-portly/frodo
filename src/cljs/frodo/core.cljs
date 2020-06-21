@@ -35,7 +35,8 @@
       [:div.navbar-start
        [nav-link "#/" "Home" :home]
        [nav-link "#/about" "About" :about]
-       [nav-link "#/notes" "Notes" :notes]]]]))
+       [nav-link "#/notes" "Notes" :notes]
+       [nav-link "#/test" "Test" :test]]]]))
 
 (defn textarea-input []
   (fn [content update-fn]
@@ -96,13 +97,35 @@
              [:button.btn.btn-outline-primary {:type "button"
                                                :on-click #(save (:content @note))} "save"]]
 
-            [:div.col-sm
-             [:div.float-sm-right
-              [:button.btn.btn-outline-secondary {:type "button"
-                                                  :on-click cancel} "cancel"]]]]]]
+            [:div.float-sm-right
+
+              [:button.btn.btn-outline-warning.mr-2 {:type "button"
+                                                  :on-click cancel} "delete"]
+             [:button.btn.btn-outline-secondary {:type "button"
+                                                  :on-click cancel} "cancel"]  ]]]]
 
          [:div
           [:div {:dangerouslySetInnerHTML {:__html (md->html (:content @note))}}]])])))
+
+(defn test-page []
+  [:div
+
+   [:div.modal.fade {:id "exampleModal1" :tabIndex "-1" :role "dialog"}
+    [:div.modal-dialog {:role "document"}
+     [:div.modal-content
+      [:div.modal-header
+       [:h5.modal-title "Modal title"]
+       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+        [:span {:aria-hidden "true" :dangerouslySetInnerHTML {:__html "&times;"}}]]]
+      [:div.modal-body
+       [:p "Modal body text goes here"]]
+      [:div.modal-footer
+       [:button.btn.btn-primary {:type "button"} "Save changes"]
+       [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]
+
+
+   [:button.btn.btn-primary {:data-toggle "modal" :data-target "#exampleModal1"} "Launch Demo Modal"]])
+
 
 (defn notes-page []
   [:section.section>div.container>div.content
@@ -137,7 +160,9 @@
     ["/about" {:name :about
                :view #'about-page}]
     ["/notes" {:name :notes
-               :view #'notes-page}]]))
+               :view #'notes-page}]
+    ["/test" {:name :test
+               :view #'test-page}]]))
 
 (defn start-router! []
   (rfe/start!
