@@ -36,6 +36,24 @@
  (fn [db _]
    db))
 
+(rf/reg-event-db
+ :set-current-note-id
+ (fn [db [_ id]]
+   (prn ":set-current-note-id called")
+   (prn id)
+   (assoc db :current-note-id id)))
+
+(rf/reg-event-fx
+ :delete-note
+ (fn [{:keys [db]} _]
+   (let [note-id (:current-note-id db)]
+     {:http-xhrio {:method :post
+                   :uri "/api/notes/delete"
+                   :format (ajax/transit-request-format)
+                   :response-format (ajax/transit-response-format)
+                   :params {:id note-id}
+                   :on-success [:remove-note note-id]}})))
+
 
 (rf/reg-event-fx
  :fetch-notes
@@ -71,9 +89,18 @@
  :new-blank-note
  (fn [db _]
    (let [note {:content "" :creation_ts (.now js/Date) }]
-     (prn "new- blank note called")
      (assoc db :note note))))
 
+
+(rf/reg-event-db
+ :remove-note
+ (fn [db [_ id]]
+   (let [notes (:notes db)]
+     (prn "remove note called")
+     (prn id)
+     (prn (dissoc notes id))
+     (prn (assoc db :notes (dissoc notes id)))
+     (assoc db :notes (dissoc notes id)))))
 
 (rf/reg-event-fx
  :add-note
@@ -176,3 +203,8 @@
  :new-note
  (fn [db _]
    (:note db)))
+
+(rf/reg-sub
+ :current-note-id
+ (fn [db _]
+   (:current-note-id db)))

@@ -50,28 +50,33 @@
 
    ["/notes"
     [""
-    {:get {:summary "returns a list of notes"
-           :handler (fn [_]
-                      {:status 200
-                       :body (db/get-notes)})}}]
+     {:get {:summary "returns a list of notes"
+            :handler (fn [_]
+                       {:status 200
+                        :body (db/get-notes)})}}]
     ["/create"
      {:post {:summary "creates a new note"
-            :handler (fn [{:keys [body-params]}]
-                       (let [id (-> body-params
-                                    (db/create-note!)
-                                    (first)
-                                    ((keyword "last_insert_rowid()")))]
-                         (println "create on server called")
-                         (println id)
-                       {:status 200
-                        :body {:id id}}))}}]
+             :handler (fn [{:keys [body-params]}]
+                        (let [id (-> body-params
+                                     (db/create-note!)
+                                     (first)
+                                     ((keyword "last_insert_rowid()")))]
+                          (println "create on server called")
+                          (println id)
+                          {:status 200
+                           :body {:id id}}))}}]
+    ["/delete"
+     {:post {:summary "deletes the note with the given id"
+             :handler (fn [{:keys [body-params]}]
+                        (db/delete-note! body-params)
+                        {:status 200
+                         :body {:foo 0}})}}]
     ["/update"
-     {:post {:summary "updates the post with the given id"
-            :handler (fn [{:keys [body-params]}]
-                       (db/update-note! body-params)
-                       {:status 200
-                        :body {:foo 0}}
-                       )}}]]
+     {:post {:summary "updates the note with the given id"
+             :handler (fn [{:keys [body-params]}]
+                        (db/update-note! body-params)
+                        {:status 200
+                         :body {:foo 0}})}}]]
    ["/ping"
     {:get (constantly (ok {:message "pong"}))}]
 

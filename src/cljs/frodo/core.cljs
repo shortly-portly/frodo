@@ -10,8 +10,7 @@
    [frodo.ajax :as ajax]
    [frodo.events]
    [reitit.core :as reitit]
-   [reitit.frontend.easy :as rfe]
-   )
+   [reitit.frontend.easy :as rfe])
   (:import goog.History))
 
 (defn nav-link [uri title page]
@@ -53,23 +52,21 @@
   (fn  []
     (let [note @(rf/subscribe [:new-note])]
       [:div {:class "shadow p-3 mb-5 bg-white rounded"}
-      [textarea-input (:content note)
-       #(rf/dispatch [:update-new-note  %])]
+       [textarea-input (:content note)
+        #(rf/dispatch [:update-new-note  %])]
 
-          [:div.container
-           [:div.row
-            [:div.col-sm
-             [:button.btn.btn-outline-primary {:type "button"
-                                               :on-click #(rf/dispatch [:create-note])}
-                                                "save"]]
+       [:div.container
+        [:div.row
+         [:div.col-sm
+          [:button.btn.btn-outline-primary {:type "button"
+                                            :on-click #(rf/dispatch [:create-note])}
+           "save"]]
 
-            [:div.col-sm
-             [:div.float-sm-right
-              [:button.btn.btn-outline-secondary {:type "button"
-                                                  :on-click #(rf/dispatch [:reset-note])}
-                                                   "cancel"]]]]]])))
-
-
+         [:div.col-sm
+          [:div.float-sm-right
+           [:button.btn.btn-outline-secondary {:type "button"
+                                               :on-click #(rf/dispatch [:reset-note])}
+            "cancel"]]]]]])))
 
 (defn note-component
   [id]
@@ -99,40 +96,50 @@
 
             [:div.float-sm-right
 
-              [:button.btn.btn-outline-warning.mr-2 {:type "button"
-                                                  :on-click cancel} "delete"]
+             [:button.btn.btn-outline-warning.mr-2 {:type "button"
+                                                    :data-toggle "modal"
+                                                    :on-click (rf/dispatch [:set-current-note-id (:id @note)])
+                                                    :data-target "#exampleModal1"} "delete"]
              [:button.btn.btn-outline-secondary {:type "button"
-                                                  :on-click cancel} "cancel"]  ]]]]
+                                                 :on-click cancel} "cancel"]]]]]
 
          [:div
           [:div {:dangerouslySetInnerHTML {:__html (md->html (:content @note))}}]])])))
 
+(defn modal-component []
+  (fn []
+
+    [:div.modal.fade.show {:id "exampleModal1" :role "dialog"}
+     [:div.modal-dialog {:role "document"}
+      [:div.modal-content
+       [:div.modal-header
+        [:h5.modal-title "Delete Note?"]
+        [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
+         [:span {:aria-hidden "true" :dangerouslySetInnerHTML {:__html "&times;"}}]]]
+       [:div.modal-body
+        [:p ]]
+       [:div.modal-footer
+        [:button.btn.btn-primary {:type "button"
+                                  :on-click #(rf/dispatch [:delete-note])
+                                  :data-dismiss "modal"} "Yes"]
+        [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Cancel"]]]]]))
+
 (defn test-page []
   [:div
-
-   [:div.modal.fade {:id "exampleModal1" :tabIndex "-1" :role "dialog"}
-    [:div.modal-dialog {:role "document"}
-     [:div.modal-content
-      [:div.modal-header
-       [:h5.modal-title "Modal title"]
-       [:button.close {:type "button" :data-dismiss "modal" :aria-label "Close"}
-        [:span {:aria-hidden "true" :dangerouslySetInnerHTML {:__html "&times;"}}]]]
-      [:div.modal-body
-       [:p "Modal body text goes here"]]
-      [:div.modal-footer
-       [:button.btn.btn-primary {:type "button"} "Save changes"]
-       [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Close"]]]]]
-
-
+   [modal-component]
+   [:div {:data-toggle "modal" :data-target "#exampleModal1"}]
    [:button.btn.btn-primary {:data-toggle "modal" :data-target "#exampleModal1"} "Launch Demo Modal"]])
-
 
 (defn notes-page []
   [:section.section>div.container>div.content
    [:h1 "Notes Page"]
    [new-note-component]
    (for [id @(rf/subscribe [:note-ids])]
-     ^{:key id} [note-component id])])
+     ^{:key id} [note-component id])
+
+   [:div
+
+    [modal-component]]])
 
 (defn about-page []
   [:section.section>div.container>div.content
@@ -162,7 +169,7 @@
     ["/notes" {:name :notes
                :view #'notes-page}]
     ["/test" {:name :test
-               :view #'test-page}]]))
+              :view #'test-page}]]))
 
 (defn start-router! []
   (rfe/start!
@@ -176,8 +183,7 @@
   (rf/clear-subscription-cache!)
   (rdom/render [#'page] (.getElementById js/document "app"))
   (rf/dispatch [:new-blank-note])
-  (rf/dispatch [:fetch-notes])
-  )
+  (rf/dispatch [:fetch-notes]))
 
 (defn init! []
   (start-router!)

@@ -35,3 +35,8 @@ VALUES (:content, :creation_ts)
 UPDATE notes
 SET content = :content, update_ts = :update_ts
 WHERE id = :id
+
+-- :name delete-note! :! :n
+-- :doc deletes a note record for the given id
+DELETE FROM notes
+WHERE id = :id
