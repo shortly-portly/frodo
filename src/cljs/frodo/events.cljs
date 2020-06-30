@@ -9,8 +9,10 @@
   (rf/->interceptor
    :id :focus
    :after (fn [context]
-            (.focus (.getElementById js/document "notebook"))
-            context)))
+            (let [current-note-id (get-in context [:effects :db :current-note-id])
+                  current-note (.getElementById js/document (str "note-" current-note-id))]
+              (if current-note (.focus current-note))
+            context))))
 
 (def scroll-into-view
   (rf/->interceptor
@@ -52,18 +54,10 @@
    db))
 
 
-(rf/reg-event-db
- :set-initial-note-id
- [focus]
- (fn [db [_ id]]
-   (let [first-key (first (keys (:notes db)))]
-     (assoc db :current-note-id first-key))))
 
 (rf/reg-event-db
  :set-current-note-id
  (fn [db [_ id]]
-   (prn ":set-current-note-id called")
-   (prn id)
    (assoc db :current-note-id id)))
 
 (rf/reg-event-fx
@@ -143,7 +137,6 @@
  :create-note
  (fn [{:keys [db]} _ ]
    (let [note (:note db)]
-     (prn ":create-note")
      {:http-xhrio {:method :post
                    :uri "/api/notes/create"
                    :format (ajax/transit-request-format)
@@ -153,9 +146,8 @@
 
 (rf/reg-event-db
  :next-note
- [scroll-into-view]
+ [scroll-into-view focus]
  (fn [db _]
-   (prn ":next-note-called")
    (let [note-ids (keys (:notes db))
          current-note-id (:current-note-id db)
          next-note-ids (drop-while #(not= current-note-id %) note-ids)
@@ -167,7 +159,7 @@
 
 (rf/reg-event-db
  :previous-note
- [scroll-into-view]
+ [scroll-into-view focus]
  (fn [db _]
    (let [note-ids (reverse (keys (:notes db)))
          current-note-id (:current-note-id db)

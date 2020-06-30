@@ -38,11 +38,15 @@
        [nav-link "#/test" "Test" :test]]]]))
 
 (defn textarea-input []
-  (fn [content update-fn]
+  (fn [content update-fn id]
     (let [row-count (count (re-seq #"\n" content))]
+      (prn id)
       [:div.form-group
        [:textarea
         {:value     content                                     ;; initial value
+         :id (str "textarea-" id)
+         :autoFocus true
+         :onFocus #(.setSelectionRange  (-> % .-target) (-> % .-target .-value .-length) (-> % .-target .-value .-length))
          :rows      (if (< row-count 5) 7 (+ row-count 2))
          :class     "form-control"
          :on-key-up #(.stopPropagation %)
@@ -58,7 +62,7 @@
 
        [:div.container
         [:div.row
-         [:div.col-sm
+         [:div.col-smh
           [:button.btn.btn-outline-primary {:type "button"
                                             :on-click #(rf/dispatch [:create-note])}
            "save"]]
@@ -87,14 +91,20 @@
     (fn []
       [:div {:class (str "shadow p-3 mb-5 rounded " (if (= id @(rf/subscribe [:current-note-id])) "selected" "not-selected"))
              :id (str "note-" id)
-             :on-double-click #(reset! editing (not @editing))}
+             :on-double-click #(reset! editing (not @editing))
+
+             :tabIndex "0"
+             :on-key-up #(case (.-which %)
+                           74 (rf/dispatch [:next-note])
+                           75 (rf/dispatch [:previous-note])
+                           69 (reset! editing true))}
 
        [:div (str (js/Date. (:creation_ts @note)))]
        (if @editing
          [:div
 
-          [textarea-input (:content @note)
-           #(swap! note assoc :content %)]
+          [textarea-input  (:content @note)
+           #(swap! note assoc :content %) id]
 
           [:div.container
            [:div.row
@@ -148,10 +158,6 @@
   [:section.section>div.container>div.content
    [:div
     {:id "notebook"
-     :tabIndex "0"
-     :on-key-up #(case (.-which %)
-                   74 (rf/dispatch [:next-note])
-                   75 (rf/dispatch [:previous-note]))
              }
 
 
@@ -160,12 +166,8 @@
      [:span "Next note id " @(rf/subscribe [:current-note-id])]]
    [new-note-component]
    (for [id @(rf/subscribe [:note-ids])]
-     (doall
-      [:div
-       [:div
-        [:hr]
-        ]
-       ^{:key id} [note-component id]]))
+
+       ^{:key id} [note-component id])
 
    [:div
     [modal-component]]]
