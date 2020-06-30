@@ -88,6 +88,7 @@
       [:div {:class (str "shadow p-3 mb-5 rounded " (if (= id @(rf/subscribe [:current-note-id])) "selected" "not-selected"))
              :id (str "note-" id)
              :on-double-click #(reset! editing (not @editing))}
+
        [:div (str (js/Date. (:creation_ts @note)))]
        (if @editing
          [:div
@@ -149,8 +150,8 @@
     {:id "notebook"
      :tabIndex "0"
      :on-key-up #(case (.-which %)
-                   78 (rf/dispatch [:next-note])
-                   79 (rf/dispatch [:previous-note]))
+                   74 (rf/dispatch [:next-note])
+                   75 (rf/dispatch [:previous-note]))
              }
 
 
