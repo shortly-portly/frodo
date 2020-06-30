@@ -33,3 +33,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+*:focus {
+   outline: none;
+}
+
+.selected {
+  border-style: dotted;
+}

@@ -93,9 +93,9 @@
                                  [figwheel-sidecar "0.5.20"]
                                  [pjstadig/humane-test-output "0.10.0"]
                                  [prone "2020-01-17"]
-                                 [re-frisk "1.3.2"]
                                  [ring/ring-devel "1.8.1"]
-                                 [ring/ring-mock "0.4.0"]]
+                                 [ring/ring-mock "0.4.0"]
+                                 [day8.re-frame/re-frame-10x "0.6.5"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.24.1"]
                                  [jonase/eastwood "0.3.5"]
                                  [lein-doo "0.1.11"]
@@ -107,8 +107,8 @@
                      :compiler
                      {:output-dir "target/cljsbuild/public/js/out"
                       :closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}
+                      :preloads [day8.re-frame-10x.preload]
                       :optimizations :none
-                      :preloads [re-frisk.preload]
                       :output-to "target/cljsbuild/public/js/app.js"
                       :asset-path "/js/out"
                       :source-map true
@@ -132,7 +132,7 @@
                      :compiler
                      {:output-to "target/test.js"
                       :main "frodo.doo-runner"
-                      :optimizations :whitespace
+                      :optimizations :none
                       :pretty-print true}}}}
                   
                   }

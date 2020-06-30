@@ -45,6 +45,7 @@
         {:value     content                                     ;; initial value
          :rows      (if (< row-count 5) 7 (+ row-count 2))
          :class     "form-control"
+         :on-key-up #(.stopPropagation %)
          :on-change #(update-fn (-> % .-target .-value))}]])))
 
 (defn new-note-component
@@ -53,7 +54,7 @@
     (let [note @(rf/subscribe [:new-note])]
       [:div {:class "shadow p-3 mb-5 bg-white rounded"}
        [textarea-input (:content note)
-        #(rf/dispatch [:update-new-note  %])]
+        #(rf/dispatch [:update-new-note %])]
 
        [:div.container
         [:div.row
@@ -77,9 +78,15 @@
                     (reset! editing false))
 
         cancel #(do (reset! note @(rf/subscribe [:note id]))
-                    (reset! editing false))]
+                    (reset! editing false)
+                    (rf/dispatch [:set-focus])
+
+                    )]
+
+
     (fn []
-      [:div {:class "shadow p-3 mb-5 bg-white rounded"
+      [:div {:class (str "shadow p-3 mb-5 rounded " (if (= id @(rf/subscribe [:current-note-id])) "selected" "not-selected"))
+             :id (str "note-" id)
              :on-double-click #(reset! editing (not @editing))}
        [:div (str (js/Date. (:creation_ts @note)))]
        (if @editing
@@ -103,8 +110,9 @@
              [:button.btn.btn-outline-secondary {:type "button"
                                                  :on-click cancel} "cancel"]]]]]
 
-         [:div
-          [:div {:dangerouslySetInnerHTML {:__html (md->html (:content @note))}}]])])))
+         [:div.active
+          [:div {
+                 :dangerouslySetInnerHTML {:__html (md->html (:content @note))}}]])])))
 
 (defn modal-component []
   (fn []
@@ -122,24 +130,45 @@
         [:button.btn.btn-primary {:type "button"
                                   :on-click #(rf/dispatch [:delete-note])
                                   :data-dismiss "modal"} "Yes"]
-        [:button.btn.btn-secondary {:type "button" :data-dismiss "modal"} "Cancel"]]]]]))
+        [:button.btn.btn-secondary {:type "button"
+                                    :data-dismiss "modal"
+                                    :on-click #(rf/dispatch [:set-focus])
+                                    } "Cancel"]]]]]))
 
 (defn test-page []
   [:div
+  
    [modal-component]
    [:div {:data-toggle "modal" :data-target "#exampleModal1"}]
    [:button.btn.btn-primary {:data-toggle "modal" :data-target "#exampleModal1"} "Launch Demo Modal"]])
 
 (defn notes-page []
+  (println "notes-page called")
   [:section.section>div.container>div.content
+   [:div
+    {:id "notebook"
+     :tabIndex "0"
+     :on-key-up #(case (.-which %)
+                   78 (rf/dispatch [:next-note])
+                   79 (rf/dispatch [:previous-note]))
+             }
+
+
    [:h1 "Notes Page"]
+    [:div
+     [:span "Next note id " @(rf/subscribe [:current-note-id])]]
    [new-note-component]
    (for [id @(rf/subscribe [:note-ids])]
-     ^{:key id} [note-component id])
+     (doall
+      [:div
+       [:div
+        [:hr]
+        ]
+       ^{:key id} [note-component id]]))
 
    [:div
-
-    [modal-component]]])
+    [modal-component]]]
+   ])
 
 (defn about-page []
   [:section.section>div.container>div.content
@@ -183,7 +212,8 @@
   (rf/clear-subscription-cache!)
   (rdom/render [#'page] (.getElementById js/document "app"))
   (rf/dispatch [:new-blank-note])
-  (rf/dispatch [:fetch-notes]))
+  (rf/dispatch [:fetch-notes])
+  )
 
 (defn init! []
   (start-router!)

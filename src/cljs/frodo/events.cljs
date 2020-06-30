@@ -5,6 +5,20 @@
    [reitit.frontend.easy :as rfe]
    [reitit.frontend.controllers :as rfc]))
 
+(def focus
+  (rf/->interceptor
+   :id :focus
+   :after (fn [context]
+            (.focus (.getElementById js/document "notebook"))
+            context)))
+
+(def scroll-into-view
+  (rf/->interceptor
+   :id :scroll-into-view
+   :after (fn [context]
+            (let [current-note-id (get-in context [:effects :db :current-note-id] )]
+              (.scrollIntoView (.getElementById js/document (str "note-" current-note-id)))
+              context))))
 ;;dispatchers
 
 (rf/reg-event-db
@@ -32,9 +46,18 @@
 
 
 (rf/reg-event-db
- :no-op
+ :set-focus
+ [focus]
  (fn [db _]
    db))
+
+
+(rf/reg-event-db
+ :set-initial-note-id
+ [focus]
+ (fn [db [_ id]]
+   (let [first-key (first (keys (:notes db)))]
+     (assoc db :current-note-id first-key))))
 
 (rf/reg-event-db
  :set-current-note-id
@@ -52,7 +75,8 @@
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
                    :params {:id note-id}
-                   :on-success [:remove-note note-id]}})))
+                   :on-success [:remove-note note-id]}
+      :dispatch [:next-note]})))
 
 
 (rf/reg-event-fx
@@ -71,12 +95,16 @@
 
 (rf/reg-event-db
  :set-notes
+   [focus]
  (fn [db [_ db-notes]]
-   (let [notes (reduce #(assoc %1 (:id %2) %2) {} db-notes)]
-     (assoc db :notes notes))))
+   (let [notes (reduce #(assoc %1 (:id %2) %2) {} db-notes)
+         db (assoc db :notes notes)]
+    
+         (assoc db :current-note-id (first (keys (:notes db)))))))
 
 (rf/reg-event-db
  :reset-note
+ [focus]
  (fn [db _]
    (assoc db :note {:content "" :creation_ts (.now js/Date)})))
 
@@ -94,12 +122,9 @@
 
 (rf/reg-event-db
  :remove-note
+ [focus]
  (fn [db [_ id]]
    (let [notes (:notes db)]
-     (prn "remove note called")
-     (prn id)
-     (prn (dissoc notes id))
-     (prn (assoc db :notes (dissoc notes id)))
      (assoc db :notes (dissoc notes id)))))
 
 (rf/reg-event-fx
@@ -126,6 +151,32 @@
                    :params note
                    :on-success [:add-note note]}})))
 
+(rf/reg-event-db
+ :next-note
+ [scroll-into-view]
+ (fn [db _]
+   (prn ":next-note-called")
+   (let [note-ids (keys (:notes db))
+         current-note-id (:current-note-id db)
+         next-note-ids (drop-while #(not= current-note-id %) note-ids)
+         next-note-id (second next-note-ids)]
+    
+     (if next-note-id
+       (assoc db :current-note-id next-note-id)
+       (assoc db :current-note-id (last note-ids))))))
+
+(rf/reg-event-db
+ :previous-note
+ [scroll-into-view]
+ (fn [db _]
+   (let [note-ids (reverse (keys (:notes db)))
+         current-note-id (:current-note-id db)
+         next-note-ids (drop-while #(not= current-note-id %) note-ids)
+         next-note-id (second next-note-ids)]
+   
+     (if next-note-id
+       (assoc db :current-note-id next-note-id)
+       (assoc db :current-note-id (last note-ids))))))
 
 (rf/reg-event-fx
  :update-note
@@ -136,7 +187,7 @@
                    :format (ajax/transit-request-format)
                    :response-format (ajax/transit-response-format)
                    :params note
-                   :on-success [:no-op]}})))
+                   :on-success [:set-focus]}})))
 (rf/reg-event-db
  :note-change
  (fn [db [_ id field new-content]]
@@ -208,3 +259,4 @@
  :current-note-id
  (fn [db _]
    (:current-note-id db)))
+
